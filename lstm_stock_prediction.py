@@ -202,14 +202,29 @@ class LSTMStockPredictor:
         plt.figure(figsize=(16, 8))
         
         # Plot training data
-        train_dates = self.data.index[self.lookback_period:train_size]
-        plt.plot(train_dates, y_train_actual, label='Actual Training Data', color='blue', alpha=0.6)
-        plt.plot(train_dates, train_predictions, label='Predicted Training Data', color='green', alpha=0.6)
+        train_start = self.lookback_period
+        train_end = train_start + len(y_train_actual)
+        
+        # Ensure we don't exceed available dates
+        if train_end <= len(self.data.index):
+            train_dates = self.data.index[train_start:train_end]
+            plt.plot(train_dates, y_train_actual, label='Actual Training Data', color='blue', alpha=0.6)
+            plt.plot(train_dates, train_predictions, label='Predicted Training Data', color='green', alpha=0.6)
         
         # Plot test data
-        test_dates = self.data.index[train_size + self.lookback_period:]
-        plt.plot(test_dates, y_test_actual, label='Actual Test Data', color='orange', alpha=0.8)
-        plt.plot(test_dates, test_predictions, label='Predicted Test Data', color='red', alpha=0.8)
+        test_start = train_size + self.lookback_period
+        test_end = test_start + len(y_test_actual)
+        
+        # Ensure we don't exceed available dates
+        if test_end <= len(self.data.index):
+            test_dates = self.data.index[test_start:test_end]
+            plt.plot(test_dates, y_test_actual, label='Actual Test Data', color='orange', alpha=0.8)
+            plt.plot(test_dates, test_predictions, label='Predicted Test Data', color='red', alpha=0.8)
+        else:
+            # If we don't have enough dates, use indices
+            test_indices = range(len(y_test_actual))
+            plt.plot(test_indices, y_test_actual, label='Actual Test Data', color='orange', alpha=0.8)
+            plt.plot(test_indices, test_predictions, label='Predicted Test Data', color='red', alpha=0.8)
         
         plt.title(f'{self.ticker} Stock Price Prediction using LSTM', fontsize=16, fontweight='bold')
         plt.xlabel('Date', fontsize=12)
@@ -221,7 +236,7 @@ class LSTMStockPredictor:
         # Save the plot
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Visualization saved to {save_path}")
-        plt.show()
+        plt.close()  # Close the figure instead of showing it
         
     def calculate_metrics(self, y_actual, y_predicted):
         """
